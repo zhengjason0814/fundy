@@ -1,8 +1,41 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import client from '../api/client'
 import { clearToken } from '../auth'
+import AddExpenseForm from '../components/AddExpenseForm'
+import ExpenseList from '../components/ExpenseList'
 
 function Dashboard() {
+  const [expenses, setExpenses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
+
+  useEffect(() => {
+    client
+      .get('/expenses')
+      .then((response) => setExpenses(response.data.expenses))
+      .catch((err) => {
+        if (err.response?.status === 401) {
+          clearToken()
+          navigate('/login')
+        } else {
+          setError('Could not load expenses')
+        }
+      })
+      .finally(() => setLoading(false))
+  }, [navigate])
+
+  function handleExpenseAdded(expense) {
+    setExpenses((current) =>
+      [expense, ...current].sort((a, b) => new Date(b.date) - new Date(a.date))
+    )
+  }
+
+  async function handleExpenseDeleted(id) {
+    await client.delete(`/expenses/${id}`)
+    setExpenses((current) => current.filter((expense) => expense._id !== id))
+  }
 
   function handleLogout() {
     clearToken()
@@ -21,8 +54,15 @@ function Dashboard() {
           Log out
         </button>
       </header>
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        <p className="text-slate-600">Dashboard coming next.</p>
+      <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+        <AddExpenseForm onAdded={handleExpenseAdded} />
+        {loading ? (
+          <p className="text-slate-500 text-center">Loading…</p>
+        ) : error ? (
+          <p className="text-red-600 text-center">{error}</p>
+        ) : (
+          <ExpenseList expenses={expenses} onDelete={handleExpenseDeleted} />
+        )}
       </main>
     </div>
   )
