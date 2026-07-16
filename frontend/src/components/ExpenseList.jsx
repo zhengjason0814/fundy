@@ -78,8 +78,18 @@ function ExpenseList({ expenses, onDelete }) {
                   <span className="inline-block rounded-full bg-brand-50 text-brand-700 px-2.5 py-0.5 text-xs font-medium">
                     {expense.category}
                   </span>
+                  {expense.source === 'plaid' && (
+                    <span
+                      title="Imported from a linked bank account"
+                      className="ml-2 inline-block rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-xs font-medium"
+                    >
+                      Bank
+                    </span>
+                  )}
                 </td>
-                <td className="px-6 py-3 text-slate-500">{expense.note ?? ''}</td>
+                <td className="px-6 py-3 text-slate-500">
+                  {expense.merchant ?? expense.note ?? ''}
+                </td>
                 <td className="px-6 py-3 text-right font-medium text-ink whitespace-nowrap">
                   {currency.format(expense.amount)}
                 </td>
