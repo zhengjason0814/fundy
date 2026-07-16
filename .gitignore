@@ -1,5 +1,7 @@
 # Claude
 .claude/
+docs/superpowers/
+.superpowers/
 
 # Node
 node_modules/
@@ -18,7 +20,6 @@ venv/
 # Env
 .env
 .env.*
-!.env.example
 
 # Docker
 docker-compose.override.yml
