@@ -54,6 +54,7 @@ async function syncItem(item) {
         user: item.user,
         account: accountId,
         amount: transaction.amount,
+        currency: transaction.iso_currency_code || transaction.unofficial_currency_code || 'USD',
         category: prettifyCategory(transaction.personal_finance_category),
         date: new Date(transaction.date),
         note: transaction.name,

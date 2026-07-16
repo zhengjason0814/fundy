@@ -1,30 +1,38 @@
 const express = require('express')
 const Expense = require('../models/Expense')
+const User = require('../models/User')
 const requireAuth = require('../middleware/auth')
+const { convertExpenses } = require('../services/exchangeRates')
 
 const router = express.Router()
 router.use(requireAuth)
 
 router.post('/', async (req, res) => {
-  const { amount, category, date, note } = req.body
+  const { amount, currency, category, date, note } = req.body
   if (amount === undefined || !category || !date) {
     return res.status(400).json({ error: 'amount, category, and date are required' })
   }
 
-  const expense = await Expense.create({
+  const created = await Expense.create({
     user: req.userId,
     amount,
+    currency,
     category,
     date,
     note,
   })
 
+  const user = await User.findById(req.userId).select('baseCurrency')
+  const [expense] = await convertExpenses([created], user.baseCurrency)
+
   res.status(201).json({ expense })
 })
 
 router.get('/', async (req, res) => {
-  const expenses = await Expense.find({ user: req.userId }).sort({ date: -1 })
-  res.json({ expenses })
+  const user = await User.findById(req.userId).select('baseCurrency')
+  const expenses = await Expense.find({ user: req.userId }).sort({ date: -1 }).lean()
+  const converted = await convertExpenses(expenses, user.baseCurrency)
+  res.json({ expenses: converted, baseCurrency: user.baseCurrency })
 })
 
 router.delete('/:id', async (req, res) => {

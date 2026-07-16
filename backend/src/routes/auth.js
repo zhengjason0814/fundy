@@ -43,7 +43,22 @@ router.post('/login', async (req, res) => {
 })
 
 router.get('/me', requireAuth, async (req, res) => {
-  const user = await User.findById(req.userId).select('email createdAt')
+  const user = await User.findById(req.userId).select('email baseCurrency createdAt')
+  res.json({ user })
+})
+
+router.patch('/me', requireAuth, async (req, res) => {
+  const { baseCurrency } = req.body
+  if (!baseCurrency) {
+    return res.status(400).json({ error: 'baseCurrency is required' })
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.userId,
+    { baseCurrency },
+    { returnDocument: 'after' }
+  ).select('email baseCurrency createdAt')
+
   res.json({ user })
 })
 
