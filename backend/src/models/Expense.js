@@ -7,6 +7,11 @@ const expenseSchema = new mongoose.Schema(
     category: { type: String, required: true, trim: true },
     date: { type: Date, required: true },
     note: { type: String, trim: true },
+    source: { type: String, enum: ['manual', 'plaid'], default: 'manual' },
+    account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account', default: null },
+    plaidTransactionId: { type: String, unique: true, sparse: true, default: undefined },
+    merchant: { type: String, trim: true },
+    pending: { type: Boolean, default: false },
   },
   { timestamps: true }
 )
