@@ -4,6 +4,7 @@ const authRoutes = require('./routes/auth')
 const expenseRoutes = require('./routes/expenses')
 const plaidRoutes = require('./routes/plaid')
 const accountRoutes = require('./routes/accounts')
+const insightRoutes = require('./routes/insights')
 
 const app = express()
 app.use(cors())
@@ -17,5 +18,6 @@ app.use('/api/auth', authRoutes)
 app.use('/api/expenses', expenseRoutes)
 app.use('/api/plaid', plaidRoutes)
 app.use('/api/accounts', accountRoutes)
+app.use('/api/insights', insightRoutes)
 
 module.exports = app
