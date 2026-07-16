@@ -6,10 +6,13 @@ import { CURRENCIES } from '../currencies'
 import AddExpenseForm from '../components/AddExpenseForm'
 import ExpenseList from '../components/ExpenseList'
 import AccountsPanel from '../components/AccountsPanel'
+import PredictionCard from '../components/PredictionCard'
 
 function Dashboard() {
   const [expenses, setExpenses] = useState([])
   const [accounts, setAccounts] = useState([])
+  const [prediction, setPrediction] = useState(null)
+  const [anomalies, setAnomalies] = useState([])
   const [baseCurrency, setBaseCurrency] = useState('USD')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -18,14 +21,19 @@ function Dashboard() {
 
   const loadData = useCallback(async () => {
     try {
-      const [meResponse, expensesResponse, accountsResponse] = await Promise.all([
-        client.get('/auth/me'),
-        client.get('/expenses'),
-        client.get('/accounts'),
-      ])
+      const [meResponse, expensesResponse, accountsResponse, predictionResponse, anomaliesResponse] =
+        await Promise.all([
+          client.get('/auth/me'),
+          client.get('/expenses'),
+          client.get('/accounts'),
+          client.get('/insights/prediction').catch(() => null),
+          client.get('/insights/anomalies').catch(() => null),
+        ])
       setBaseCurrency(meResponse.data.user.baseCurrency)
       setExpenses(expensesResponse.data.expenses)
       setAccounts(accountsResponse.data.accounts)
+      setPrediction(predictionResponse?.data ?? { status: 'unavailable' })
+      setAnomalies(anomaliesResponse?.data?.anomalies ?? [])
     } catch (err) {
       if (err.response?.status === 401) {
         clearToken()
@@ -49,6 +57,11 @@ function Dashboard() {
   async function handleExpenseDeleted(id) {
     await client.delete(`/expenses/${id}`)
     setExpenses((current) => current.filter((expense) => expense._id !== id))
+  }
+
+  async function handleDismissAnomaly(id) {
+    await client.post(`/expenses/${id}/dismiss-anomaly`)
+    setAnomalies((current) => current.filter((anomaly) => anomaly.id !== id))
   }
 
   async function handleSync() {
@@ -114,6 +127,7 @@ function Dashboard() {
               onSync={handleSync}
               syncing={syncing}
             />
+            <PredictionCard prediction={prediction} baseCurrency={baseCurrency} />
             <AddExpenseForm onAdded={handleExpenseAdded} baseCurrency={baseCurrency} />
             <ExpenseList
               expenses={expenses}
