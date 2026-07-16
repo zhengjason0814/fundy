@@ -48,4 +48,18 @@ router.delete('/:id', async (req, res) => {
   res.json({ deleted: deleted._id })
 })
 
+router.post('/:id/dismiss-anomaly', async (req, res) => {
+  const updated = await Expense.findOneAndUpdate(
+    { _id: req.params.id, user: req.userId },
+    { anomalyDismissed: true },
+    { returnDocument: 'after' }
+  )
+
+  if (!updated) {
+    return res.status(404).json({ error: 'Expense not found' })
+  }
+
+  res.json({ expense: updated })
+})
+
 module.exports = router

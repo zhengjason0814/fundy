@@ -13,6 +13,7 @@ const expenseSchema = new mongoose.Schema(
     plaidTransactionId: { type: String, unique: true, sparse: true, default: undefined },
     merchant: { type: String, trim: true },
     pending: { type: Boolean, default: false },
+    anomalyDismissed: { type: Boolean, default: false },
   },
   { timestamps: true }
 )
