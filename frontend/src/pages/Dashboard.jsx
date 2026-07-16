@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import client from '../api/client'
 import { clearToken } from '../auth'
+import { CURRENCIES } from '../currencies'
 import AddExpenseForm from '../components/AddExpenseForm'
 import ExpenseList from '../components/ExpenseList'
 import AccountsPanel from '../components/AccountsPanel'
@@ -9,6 +10,7 @@ import AccountsPanel from '../components/AccountsPanel'
 function Dashboard() {
   const [expenses, setExpenses] = useState([])
   const [accounts, setAccounts] = useState([])
+  const [baseCurrency, setBaseCurrency] = useState('USD')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [syncing, setSyncing] = useState(false)
@@ -16,10 +18,12 @@ function Dashboard() {
 
   const loadData = useCallback(async () => {
     try {
-      const [expensesResponse, accountsResponse] = await Promise.all([
+      const [meResponse, expensesResponse, accountsResponse] = await Promise.all([
+        client.get('/auth/me'),
         client.get('/expenses'),
         client.get('/accounts'),
       ])
+      setBaseCurrency(meResponse.data.user.baseCurrency)
       setExpenses(expensesResponse.data.expenses)
       setAccounts(accountsResponse.data.accounts)
     } catch (err) {
@@ -57,6 +61,13 @@ function Dashboard() {
     }
   }
 
+  async function handleBaseCurrencyChange(event) {
+    const next = event.target.value
+    setBaseCurrency(next)
+    await client.patch('/auth/me', { baseCurrency: next })
+    await loadData()
+  }
+
   function handleLogout() {
     clearToken()
     navigate('/login')
@@ -66,13 +77,29 @@ function Dashboard() {
     <div className="min-h-screen bg-surface">
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold text-brand-700">Fundy</h1>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="text-sm text-slate-500 hover:text-slate-700"
-        >
-          Log out
-        </button>
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-sm text-slate-500">
+            Home currency
+            <select
+              value={baseCurrency}
+              onChange={handleBaseCurrencyChange}
+              className="rounded-md border border-slate-300 px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
+            >
+              {CURRENCIES.map((code) => (
+                <option key={code} value={code}>
+                  {code}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="text-sm text-slate-500 hover:text-slate-700"
+          >
+            Log out
+          </button>
+        </div>
       </header>
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         {loading ? (
@@ -87,8 +114,12 @@ function Dashboard() {
               onSync={handleSync}
               syncing={syncing}
             />
-            <AddExpenseForm onAdded={handleExpenseAdded} />
-            <ExpenseList expenses={expenses} onDelete={handleExpenseDeleted} />
+            <AddExpenseForm onAdded={handleExpenseAdded} baseCurrency={baseCurrency} />
+            <ExpenseList
+              expenses={expenses}
+              baseCurrency={baseCurrency}
+              onDelete={handleExpenseDeleted}
+            />
           </>
         )}
       </main>

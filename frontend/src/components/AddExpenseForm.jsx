@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import client from '../api/client'
+import { CURRENCIES } from '../currencies'
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function AddExpenseForm({ onAdded }) {
+function AddExpenseForm({ onAdded, baseCurrency }) {
   const [amount, setAmount] = useState('')
+  const [currency, setCurrency] = useState(baseCurrency)
   const [category, setCategory] = useState('')
   const [date, setDate] = useState(todayISO())
   const [note, setNote] = useState('')
@@ -20,12 +22,14 @@ function AddExpenseForm({ onAdded }) {
     try {
       const response = await client.post('/expenses', {
         amount: Number(amount),
+        currency,
         category,
         date,
         note: note || undefined,
       })
       onAdded(response.data.expense)
       setAmount('')
+      setCurrency(baseCurrency)
       setCategory('')
       setDate(todayISO())
       setNote('')
@@ -57,6 +61,20 @@ function AddExpenseForm({ onAdded }) {
             onChange={(e) => setAmount(e.target.value)}
             className={inputClasses}
           />
+        </label>
+        <label className="block">
+          <span className="text-sm text-slate-600">Currency</span>
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            className={inputClasses}
+          >
+            {CURRENCIES.map((code) => (
+              <option key={code} value={code}>
+                {code}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="block">
           <span className="text-sm text-slate-600">Category</span>

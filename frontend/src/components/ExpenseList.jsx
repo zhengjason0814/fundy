@@ -1,7 +1,4 @@
-const currency = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-})
+import { formatMoney } from '../currencies'
 
 function formatDate(isoString) {
   return new Date(isoString).toLocaleDateString('en-US', {
@@ -23,7 +20,7 @@ function isFutureDate(isoString) {
   return isoString.slice(0, 10) > localTodayISO()
 }
 
-function ExpenseList({ expenses, onDelete }) {
+function ExpenseList({ expenses, baseCurrency, onDelete }) {
   if (expenses.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-center text-slate-500">
@@ -32,10 +29,14 @@ function ExpenseList({ expenses, onDelete }) {
     )
   }
 
-  const total = expenses.reduce((sum, expense) => sum + expense.amount, 0)
+  const total = expenses.reduce(
+    (sum, expense) =>
+      typeof expense.convertedAmount === 'number' ? sum + expense.convertedAmount : sum,
+    0
+  )
 
   function handleDeleteClick(expense) {
-    const label = `${expense.category} — ${currency.format(expense.amount)}`
+    const label = `${expense.category} — ${formatMoney(expense.amount, expense.currency)}`
     if (window.confirm(`Delete this expense?\n\n${label}`)) {
       onDelete(expense._id)
     }
@@ -46,7 +47,8 @@ function ExpenseList({ expenses, onDelete }) {
       <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
         <h2 className="text-lg font-medium text-ink">History</h2>
         <span className="text-sm text-slate-500">
-          Total: <span className="font-semibold text-ink">{currency.format(total)}</span>
+          Total:{' '}
+          <span className="font-semibold text-ink">{formatMoney(total, baseCurrency)}</span>
         </span>
       </div>
       <div className="overflow-x-auto">
@@ -90,8 +92,17 @@ function ExpenseList({ expenses, onDelete }) {
                 <td className="px-6 py-3 text-slate-500">
                   {expense.merchant ?? expense.note ?? ''}
                 </td>
-                <td className="px-6 py-3 text-right font-medium text-ink whitespace-nowrap">
-                  {currency.format(expense.amount)}
+                <td className="px-6 py-3 text-right whitespace-nowrap">
+                  <div className="font-medium text-ink">
+                    {formatMoney(expense.amount, expense.currency)}
+                  </div>
+                  {expense.currency !== baseCurrency && (
+                    <div className="text-xs text-slate-400">
+                      {typeof expense.convertedAmount === 'number'
+                        ? `≈ ${formatMoney(expense.convertedAmount, baseCurrency)}`
+                        : 'no rate'}
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-3 text-right">
                   <button
