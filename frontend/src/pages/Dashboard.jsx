@@ -7,6 +7,7 @@ import AddExpenseForm from '../components/AddExpenseForm'
 import ExpenseList from '../components/ExpenseList'
 import AccountsPanel from '../components/AccountsPanel'
 import PredictionCard from '../components/PredictionCard'
+import AnomalyStrip from '../components/AnomalyStrip'
 
 function Dashboard() {
   const [expenses, setExpenses] = useState([])
@@ -127,12 +128,18 @@ function Dashboard() {
               onSync={handleSync}
               syncing={syncing}
             />
+            <AnomalyStrip
+              anomalies={anomalies}
+              baseCurrency={baseCurrency}
+              onDismiss={handleDismissAnomaly}
+            />
             <PredictionCard prediction={prediction} baseCurrency={baseCurrency} />
             <AddExpenseForm onAdded={handleExpenseAdded} baseCurrency={baseCurrency} />
             <ExpenseList
               expenses={expenses}
               baseCurrency={baseCurrency}
               onDelete={handleExpenseDeleted}
+              anomalyIds={new Set(anomalies.map((anomaly) => anomaly.id))}
             />
           </>
         )}
