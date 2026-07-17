@@ -3,6 +3,7 @@ import numpy as np
 MIN_CATEGORY_SIZE = 5
 Z_THRESHOLD = 3.5
 MAD_SCALE = 0.6745
+MEAN_AD_SCALE = 1.253314
 
 
 def detect_anomalies(expenses):
@@ -17,14 +18,21 @@ def detect_anomalies(expenses):
         amounts = np.array([item["amount"] for item in items], dtype=float)
         median = float(np.median(amounts))
         mad = float(np.median(np.abs(amounts - median)))
-        if mad == 0:
-            continue
+
+        if mad > 0:
+            scale_factor = MAD_SCALE / mad
+        else:
+            mean_ad = float(np.mean(np.abs(amounts - median)))
+            if mean_ad == 0:
+                continue
+            scale_factor = 1 / (MEAN_AD_SCALE * mean_ad)
+
         typical_low, typical_high = np.percentile(amounts, [25, 75])
         for item in items:
             amount = float(item["amount"])
             if amount <= median:
                 continue
-            score = MAD_SCALE * (amount - median) / mad
+            score = scale_factor * (amount - median)
             if score > Z_THRESHOLD:
                 anomalies.append({
                     "id": item["id"],

@@ -31,3 +31,11 @@ def test_identical_amounts_skipped():
 def test_low_outlier_not_flagged():
     expenses = [coffee(str(i), 50.0 + i) for i in range(8)] + [coffee("tiny", 0.5)]
     assert detect_anomalies(expenses) == []
+
+
+def test_majority_identical_amounts_still_flags_outliers():
+    expenses = [coffee(str(i), 3.0) for i in range(12)]
+    expenses += [coffee("big1", 1231.0), coffee("big2", 1231.0)]
+    anomalies = detect_anomalies(expenses)
+    assert sorted(a["id"] for a in anomalies) == ["big1", "big2"]
+    assert all(a["score"] == 5.6 for a in anomalies)
