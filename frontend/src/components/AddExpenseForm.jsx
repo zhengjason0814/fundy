@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import client from '../api/client'
 import { CURRENCIES } from '../currencies'
 
@@ -14,6 +14,33 @@ function AddExpenseForm({ onAdded, baseCurrency }) {
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [suggestion, setSuggestion] = useState(null)
+
+  useEffect(() => {
+    if (!note.trim() || category) {
+      setSuggestion(null)
+      return
+    }
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      try {
+        const response = await client.get('/insights/suggest-category', {
+          params: { text: note },
+        })
+        if (!cancelled) {
+          setSuggestion(response.data.status === 'ok' ? response.data : null)
+        }
+      } catch {
+        if (!cancelled) {
+          setSuggestion(null)
+        }
+      }
+    }, 500)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [note, category])
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -33,6 +60,7 @@ function AddExpenseForm({ onAdded, baseCurrency }) {
       setCategory('')
       setDate(todayISO())
       setNote('')
+      setSuggestion(null)
     } catch (err) {
       setError(err.response?.data?.error ?? 'Could not add expense')
     } finally {
@@ -86,6 +114,18 @@ function AddExpenseForm({ onAdded, baseCurrency }) {
             onChange={(e) => setCategory(e.target.value)}
             className={inputClasses}
           />
+          {suggestion && !category && (
+            <button
+              type="button"
+              onClick={() => {
+                setCategory(suggestion.category)
+                setSuggestion(null)
+              }}
+              className="mt-1 inline-block rounded-full bg-brand-50 text-brand-700 px-2.5 py-0.5 text-xs font-medium hover:bg-brand-100"
+            >
+              Suggested: {suggestion.category}
+            </button>
+          )}
         </label>
         <label className="block">
           <span className="text-sm text-slate-600">Date</span>
