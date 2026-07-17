@@ -49,10 +49,16 @@ function Dashboard() {
     loadData().finally(() => setLoading(false))
   }, [loadData])
 
-  function handleExpenseAdded(expense) {
+  async function handleExpenseAdded(expense) {
     setExpenses((current) =>
       [expense, ...current].sort((a, b) => new Date(b.date) - new Date(a.date))
     )
+    try {
+      const response = await client.get('/insights/anomalies')
+      setAnomalies(response.data.anomalies ?? [])
+    } catch {
+      // keep existing anomalies if the recheck fails
+    }
   }
 
   async function handleExpenseDeleted(id) {
