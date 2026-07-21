@@ -1,4 +1,5 @@
-import { formatMoney } from '../currencies'
+import { formatMoney, formatSignedMoney } from '../currencies'
+import { isSpend } from '../categories'
 
 function formatDate(isoString) {
   return new Date(isoString).toLocaleDateString('en-US', {
@@ -31,7 +32,9 @@ function ExpenseList({ expenses, baseCurrency, onDelete, anomalyIds }) {
 
   const total = expenses.reduce(
     (sum, expense) =>
-      typeof expense.convertedAmount === 'number' ? sum + expense.convertedAmount : sum,
+      isSpend(expense) && typeof expense.convertedAmount === 'number'
+        ? sum + expense.convertedAmount
+        : sum,
     0
   )
 
@@ -101,13 +104,17 @@ function ExpenseList({ expenses, baseCurrency, onDelete, anomalyIds }) {
                   {expense.merchant ?? expense.note ?? ''}
                 </td>
                 <td className="px-6 py-3 text-right whitespace-nowrap">
-                  <div className="font-medium text-ink">
-                    {formatMoney(expense.amount, expense.currency)}
+                  <div
+                    className={`font-medium ${
+                      expense.type === 'income' ? 'text-emerald-600' : 'text-ink'
+                    }`}
+                  >
+                    {formatSignedMoney(expense.amount, expense.currency, expense.type)}
                   </div>
                   {expense.currency !== baseCurrency && (
                     <div className="text-xs text-slate-400">
                       {typeof expense.convertedAmount === 'number'
-                        ? `≈ ${formatMoney(expense.convertedAmount, baseCurrency)}`
+                        ? `≈ ${formatSignedMoney(expense.convertedAmount, baseCurrency, expense.type)}`
                         : 'no rate'}
                     </div>
                   )}

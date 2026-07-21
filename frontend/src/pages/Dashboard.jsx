@@ -8,6 +8,7 @@ import ExpenseList from "../components/ExpenseList";
 import AccountsPanel from "../components/AccountsPanel";
 import PredictionCard from "../components/PredictionCard";
 import AnomalyStrip from "../components/AnomalyStrip";
+import BalanceCard from "../components/BalanceCard";
 
 function Dashboard() {
   const [expenses, setExpenses] = useState([]);
@@ -139,6 +140,7 @@ function Dashboard() {
           <p className="text-red-600 text-center">{error}</p>
         ) : (
           <>
+            <BalanceCard accounts={accounts} baseCurrency={baseCurrency} />
             <AccountsPanel
               accounts={accounts}
               onConnected={loadData}

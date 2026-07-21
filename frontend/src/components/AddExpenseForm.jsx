@@ -8,6 +8,7 @@ function todayISO() {
 }
 
 function AddExpenseForm({ onAdded, baseCurrency }) {
+  const [type, setType] = useState('expense')
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState(baseCurrency)
   const [category, setCategory] = useState('')
@@ -58,8 +59,10 @@ function AddExpenseForm({ onAdded, baseCurrency }) {
         category,
         date,
         note,
+        type,
       })
       onAdded(response.data.expense)
+      setType('expense')
       setAmount('')
       setCurrency(baseCurrency)
       setCategory('')
@@ -81,7 +84,27 @@ function AddExpenseForm({ onAdded, baseCurrency }) {
       onSubmit={handleSubmit}
       className="bg-white rounded-xl shadow-sm border border-slate-200 p-6"
     >
-      <h2 className="text-lg font-medium text-ink mb-4">Add expense</h2>
+      <h2 className="text-lg font-medium text-ink mb-4">Add transaction</h2>
+      <div className="mb-4 inline-flex rounded-md border border-slate-300 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setType('expense')}
+          className={`px-4 py-2 text-sm font-medium ${
+            type === 'expense' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600'
+          }`}
+        >
+          Expense
+        </button>
+        <button
+          type="button"
+          onClick={() => setType('income')}
+          className={`px-4 py-2 text-sm font-medium ${
+            type === 'income' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600'
+          }`}
+        >
+          Income
+        </button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <label className="block">
           <span className="text-sm text-slate-600">Amount</span>
@@ -166,7 +189,7 @@ function AddExpenseForm({ onAdded, baseCurrency }) {
         disabled={submitting}
         className="mt-4 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
       >
-        {submitting ? 'Adding…' : 'Add expense'}
+        {submitting ? 'Adding…' : type === 'income' ? 'Add income' : 'Add expense'}
       </button>
     </form>
   )

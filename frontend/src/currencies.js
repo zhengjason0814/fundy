@@ -6,3 +6,12 @@ export function formatMoney(amount, currency) {
     currency: currency || 'USD',
   }).format(amount)
 }
+
+export function formatSignedMoney(amount, currency, type) {
+  const signedAmount = type === 'income' ? amount : -amount
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency || 'USD',
+    signDisplay: 'exceptZero',
+  }).format(signedAmount)
+}

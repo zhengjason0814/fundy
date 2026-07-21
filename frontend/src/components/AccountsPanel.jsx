@@ -1,4 +1,5 @@
 import ConnectBank from './ConnectBank'
+import { formatMoney } from '../currencies'
 
 function AccountsPanel({ accounts, onConnected, onSync, syncing }) {
   return (
@@ -34,9 +35,16 @@ function AccountsPanel({ accounts, onConnected, onSync, syncing }) {
                   <span className="text-slate-400 text-sm"> ••{account.mask}</span>
                 )}
               </div>
-              <span className="text-xs text-slate-500 capitalize">
-                {account.subtype || account.type}
-              </span>
+              <div className="text-right">
+                <div className="text-xs text-slate-500 capitalize">
+                  {account.subtype || account.type}
+                </div>
+                {typeof account.balance === 'number' && (
+                  <div className="text-sm text-ink">
+                    {formatMoney(account.balance, account.currency)}
+                  </div>
+                )}
+              </div>
             </li>
           ))}
         </ul>
