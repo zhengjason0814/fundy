@@ -4,18 +4,22 @@ const User = require('../models/User')
 const requireAuth = require('../middleware/auth')
 const { convertExpenses } = require('../services/exchangeRates')
 const { CATEGORIES } = require('../constants/categories')
+const { TRANSACTION_TYPES } = require('../constants/transactionTypes')
 
 const router = express.Router()
 router.use(requireAuth)
 
 router.post('/', async (req, res) => {
-  const { amount, currency, category, date, note } = req.body
+  const { amount, currency, category, date, note, type } = req.body
   const trimmedNote = (note || '').trim()
-  if (amount === undefined || !category || !date || !trimmedNote) {
-    return res.status(400).json({ error: 'amount, category, date, and note are required' })
+  if (amount === undefined || !category || !date || !trimmedNote || !type) {
+    return res.status(400).json({ error: 'amount, category, date, note, and type are required' })
   }
   if (!CATEGORIES.includes(category)) {
     return res.status(400).json({ error: `category must be one of: ${CATEGORIES.join(', ')}` })
+  }
+  if (!TRANSACTION_TYPES.includes(type)) {
+    return res.status(400).json({ error: `type must be one of: ${TRANSACTION_TYPES.join(', ')}` })
   }
 
   const created = await Expense.create({
@@ -25,6 +29,7 @@ router.post('/', async (req, res) => {
     category,
     date,
     note: trimmedNote,
+    type,
   })
 
   const user = await User.findById(req.userId).select('baseCurrency')

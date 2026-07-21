@@ -10,6 +10,7 @@ const accountSchema = new mongoose.Schema(
     type: { type: String, trim: true },
     subtype: { type: String, trim: true },
     currency: { type: String, trim: true },
+    balance: { type: Number },
   },
   { timestamps: true }
 )

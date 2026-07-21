@@ -13,6 +13,7 @@ const CATEGORIES = [
   'Deposit',
   'Income',
   'Transfer',
+  'Credit Card Payment',
   'Other',
 ]
 

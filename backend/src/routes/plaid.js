@@ -15,6 +15,15 @@ async function syncItem(item) {
     accounts.map((account) => [account.plaidAccountId, account._id])
   )
 
+  const accountsResponse = await plaidClient.accountsGet({
+    access_token: item.accessToken,
+  })
+  for (const account of accountsResponse.data.accounts) {
+    const accountId = accountIdByPlaidId.get(account.account_id)
+    if (!accountId) continue
+    await Account.updateOne({ _id: accountId }, { balance: account.balances?.current })
+  }
+
   let cursor = item.cursor
   const added = []
   const modified = []
@@ -35,7 +44,6 @@ async function syncItem(item) {
 
   let imported = 0
   for (const transaction of [...added, ...modified]) {
-    if (transaction.amount <= 0) continue
     const accountId = accountIdByPlaidId.get(transaction.account_id)
     if (!accountId) continue
 
@@ -44,7 +52,8 @@ async function syncItem(item) {
       {
         user: item.user,
         account: accountId,
-        amount: transaction.amount,
+        amount: Math.abs(transaction.amount),
+        type: transaction.amount < 0 ? 'income' : 'expense',
         currency: transaction.iso_currency_code || transaction.unofficial_currency_code || 'USD',
         category: mapPlaidCategory(transaction.personal_finance_category),
         date: new Date(transaction.date),

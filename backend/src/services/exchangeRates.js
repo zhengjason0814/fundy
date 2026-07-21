@@ -53,8 +53,34 @@ async function convertExpenses(expenses, baseCurrency) {
   return converted
 }
 
+async function convertAccountBalances(accounts, baseCurrency) {
+  const base = (baseCurrency || 'USD').toUpperCase()
+  const today = new Date().toISOString().slice(0, 10)
+  const converted = []
+
+  for (const account of accounts) {
+    const plain = account.toObject ? account.toObject() : account
+    const native = (plain.currency || 'USD').toUpperCase()
+
+    let convertedBalance = null
+    if (typeof plain.balance === 'number') {
+      if (native === base) {
+        convertedBalance = plain.balance
+      } else {
+        const rates = await getRateTable(base, today)
+        const perBase = rates?.[native]
+        convertedBalance = perBase ? Math.round((plain.balance / perBase) * 100) / 100 : null
+      }
+    }
+
+    converted.push({ ...plain, convertedBalance, baseCurrency: base })
+  }
+
+  return converted
+}
+
 function __clearCache() {
   rateTableCache.clear()
 }
 
-module.exports = { convertExpenses, __clearCache }
+module.exports = { convertExpenses, convertAccountBalances, __clearCache }

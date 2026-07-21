@@ -1,6 +1,5 @@
 const PRIMARY_CATEGORY_MAP = {
   INCOME: 'Income',
-  LOAN_PAYMENTS: 'Financial/Legal',
   BANK_FEES: 'Financial/Legal',
   ENTERTAINMENT: 'Entertainment',
   GENERAL_MERCHANDISE: 'Shopping/Retail',
@@ -22,6 +21,10 @@ function mapPlaidCategory(personalFinanceCategory) {
 
   if (primary === 'FOOD_AND_DRINK') {
     return detailed.includes('GROCERIES') ? 'Groceries' : 'Dining'
+  }
+
+  if (primary === 'LOAN_PAYMENTS') {
+    return detailed.includes('CREDIT_CARD_PAYMENT') ? 'Credit Card Payment' : 'Financial/Legal'
   }
 
   if (primary === 'TRANSFER_IN') {

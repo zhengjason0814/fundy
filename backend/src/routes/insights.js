@@ -3,6 +3,7 @@ const Expense = require('../models/Expense')
 const User = require('../models/User')
 const requireAuth = require('../middleware/auth')
 const { convertExpenses } = require('../services/exchangeRates')
+const { isSpend } = require('../services/spendFilter')
 const mlClient = require('../services/mlClient')
 
 const router = express.Router()
@@ -13,7 +14,7 @@ async function loadConvertibleExpenses(userId) {
   const expenses = await Expense.find({ user: userId }).lean()
   const converted = await convertExpenses(expenses, user.baseCurrency)
   const usable = converted.filter(
-    (expense) => typeof expense.convertedAmount === 'number'
+    (expense) => typeof expense.convertedAmount === 'number' && isSpend(expense)
   )
   return { usable, baseCurrency: user.baseCurrency }
 }
