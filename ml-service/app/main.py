@@ -23,8 +23,6 @@ def predict(request: PredictRequest):
 def classify(request: ClassifyRequest):
     history = [row.model_dump() for row in request.history]
     suggestion = suggest_category(history, request.text)
-    if suggestion is None:
-        return {"status": "no_suggestion"}
     return {"status": "ok", **suggestion}
 
 

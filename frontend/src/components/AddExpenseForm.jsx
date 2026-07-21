@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import client from '../api/client'
 import { CURRENCIES } from '../currencies'
+import { CATEGORIES, isNoneLikeNote } from '../categories'
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
@@ -19,6 +20,10 @@ function AddExpenseForm({ onAdded, baseCurrency }) {
   useEffect(() => {
     if (!note.trim() || category) {
       setSuggestion(null)
+      return
+    }
+    if (isNoneLikeNote(note)) {
+      setSuggestion({ category: 'Other' })
       return
     }
     let cancelled = false
@@ -52,7 +57,7 @@ function AddExpenseForm({ onAdded, baseCurrency }) {
         currency,
         category,
         date,
-        note: note || undefined,
+        note,
       })
       onAdded(response.data.expense)
       setAmount('')
@@ -106,14 +111,21 @@ function AddExpenseForm({ onAdded, baseCurrency }) {
         </label>
         <label className="block">
           <span className="text-sm text-slate-600">Category</span>
-          <input
-            type="text"
+          <select
             required
-            placeholder="Groceries"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className={inputClasses}
-          />
+          >
+            <option value="" disabled>
+              Select a category
+            </option>
+            {CATEGORIES.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
           {suggestion && !category && (
             <button
               type="button"
@@ -138,9 +150,10 @@ function AddExpenseForm({ onAdded, baseCurrency }) {
           />
         </label>
         <label className="block">
-          <span className="text-sm text-slate-600">Note (optional)</span>
+          <span className="text-sm text-slate-600">Note</span>
           <input
             type="text"
+            required
             value={note}
             onChange={(e) => setNote(e.target.value)}
             className={inputClasses}

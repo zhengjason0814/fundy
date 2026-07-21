@@ -8,9 +8,9 @@ MIN_CONFIDENCE = 0.5
 
 def suggest_category(history, text):
     if len(history) < MIN_HISTORY:
-        return None
+        return {"category": "Other", "confidence": 0.0}
     if len({row["category"] for row in history}) < 2:
-        return None
+        return {"category": "Other", "confidence": 0.0}
 
     texts = [row["text"] for row in history]
     labels = [row["category"] for row in history]
@@ -25,5 +25,5 @@ def suggest_category(history, text):
     best = int(probabilities.argmax())
     confidence = float(probabilities[best])
     if confidence < MIN_CONFIDENCE:
-        return None
+        return {"category": "Other", "confidence": 0.0}
     return {"category": str(model.classes_[best]), "confidence": round(confidence, 2)}

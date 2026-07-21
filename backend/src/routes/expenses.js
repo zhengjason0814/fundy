@@ -3,14 +3,19 @@ const Expense = require('../models/Expense')
 const User = require('../models/User')
 const requireAuth = require('../middleware/auth')
 const { convertExpenses } = require('../services/exchangeRates')
+const { CATEGORIES } = require('../constants/categories')
 
 const router = express.Router()
 router.use(requireAuth)
 
 router.post('/', async (req, res) => {
   const { amount, currency, category, date, note } = req.body
-  if (amount === undefined || !category || !date) {
-    return res.status(400).json({ error: 'amount, category, and date are required' })
+  const trimmedNote = (note || '').trim()
+  if (amount === undefined || !category || !date || !trimmedNote) {
+    return res.status(400).json({ error: 'amount, category, date, and note are required' })
+  }
+  if (!CATEGORIES.includes(category)) {
+    return res.status(400).json({ error: `category must be one of: ${CATEGORIES.join(', ')}` })
   }
 
   const created = await Expense.create({
@@ -19,7 +24,7 @@ router.post('/', async (req, res) => {
     currency,
     category,
     date,
-    note,
+    note: trimmedNote,
   })
 
   const user = await User.findById(req.userId).select('baseCurrency')

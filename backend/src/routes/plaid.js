@@ -4,19 +4,10 @@ const requireAuth = require('../middleware/auth')
 const PlaidItem = require('../models/PlaidItem')
 const Account = require('../models/Account')
 const Expense = require('../models/Expense')
+const { mapPlaidCategory } = require('../services/plaidCategoryMap')
 
 const router = express.Router()
 router.use(requireAuth)
-
-function prettifyCategory(personalFinanceCategory) {
-  const primary = personalFinanceCategory?.primary
-  if (!primary) return 'Uncategorized'
-  return primary
-    .toLowerCase()
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
 
 async function syncItem(item) {
   const accounts = await Account.find({ item: item._id })
@@ -55,7 +46,7 @@ async function syncItem(item) {
         account: accountId,
         amount: transaction.amount,
         currency: transaction.iso_currency_code || transaction.unofficial_currency_code || 'USD',
-        category: prettifyCategory(transaction.personal_finance_category),
+        category: mapPlaidCategory(transaction.personal_finance_category),
         date: new Date(transaction.date),
         note: transaction.name,
         merchant: transaction.merchant_name || undefined,
