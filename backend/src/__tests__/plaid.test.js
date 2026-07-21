@@ -30,7 +30,7 @@ const outflowTransaction = {
   name: 'Starbucks',
   merchant_name: 'Starbucks',
   pending: false,
-  personal_finance_category: { primary: 'FOOD_AND_DRINK' },
+  personal_finance_category: { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_COFFEE' },
 }
 
 const inflowTransaction = {
@@ -123,7 +123,7 @@ describe('POST /api/plaid/exchange', () => {
     expect(expenses.body.expenses).toHaveLength(1)
     expect(expenses.body.expenses[0]).toMatchObject({
       amount: 12.5,
-      category: 'Food And Drink',
+      category: 'Dining',
       merchant: 'Starbucks',
       source: 'plaid',
       pending: false,

@@ -16,7 +16,7 @@ async function createExpense(token, overrides = {}) {
   const res = await request(app)
     .post('/api/expenses')
     .set('Authorization', `Bearer ${token}`)
-    .send({ amount: 5, category: 'Coffee', date: '2026-07-01', ...overrides })
+    .send({ amount: 5, category: 'Dining', date: '2026-07-01', note: 'test note', ...overrides })
   return res.body.expense
 }
 
@@ -138,7 +138,7 @@ describe('GET /api/insights/suggest-category', () => {
       .set('Authorization', `Bearer ${token}`)
     expect(res.body).toMatchObject({ status: 'ok', category: 'Coffee' })
     expect(mlClient.classify).toHaveBeenCalledWith(
-      [{ text: 'latte', category: 'Coffee' }],
+      [{ text: 'latte', category: 'Dining' }],
       'starbucks'
     )
   })

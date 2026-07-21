@@ -30,9 +30,9 @@ def test_predict_ok():
     assert "next_month" in body
 
 
-def test_classify_no_suggestion_on_thin_history():
+def test_classify_falls_back_to_other_on_thin_history():
     response = client.post("/classify", json={"history": [], "text": "starbucks"})
-    assert response.json() == {"status": "no_suggestion"}
+    assert response.json() == {"status": "ok", "category": "Other", "confidence": 0.0}
 
 
 def test_classify_ok():

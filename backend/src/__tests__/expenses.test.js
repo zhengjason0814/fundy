@@ -56,20 +56,22 @@ describe('GET /api/expenses', () => {
     })
     await authed(request(app).post('/api/expenses'), janeToken).send({
       amount: 15,
-      category: 'Transport',
+      category: 'Transportation',
       date: '2026-07-12',
+      note: 'Bus fare',
     })
     await authed(request(app).post('/api/expenses'), bobToken).send({
       amount: 99,
-      category: 'BobsOnly',
+      category: 'Other',
       date: '2026-07-05',
+      note: 'Misc',
     })
 
     const response = await authed(request(app).get('/api/expenses'), janeToken)
 
     expect(response.status).toBe(200)
     expect(response.body.expenses).toHaveLength(2)
-    expect(response.body.expenses.map((e) => e.category)).toEqual(['Transport', 'Groceries'])
+    expect(response.body.expenses.map((e) => e.category)).toEqual(['Transportation', 'Groceries'])
   })
 
   it('rejects a request without a token', async () => {
