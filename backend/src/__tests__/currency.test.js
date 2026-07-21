@@ -39,6 +39,7 @@ describe('multi-currency conversion', () => {
       category: 'Groceries',
       date: '2026-05-01',
       note: 'Market run',
+      type: 'expense',
     })
 
     expect(response.status).toBe(201)
@@ -62,6 +63,7 @@ describe('multi-currency conversion', () => {
       category: 'Dining',
       date: '2026-05-01',
       note: 'Lunch',
+      type: 'expense',
     })
 
     expect(response.body.expense.convertedAmount).toBe(50)
@@ -77,6 +79,7 @@ describe('multi-currency conversion', () => {
       category: 'Groceries',
       date: '2026-05-01',
       note: 'Market run',
+      type: 'expense',
     })
     await authed(request(app).post('/api/expenses'), token).send({
       amount: 20,
@@ -84,6 +87,7 @@ describe('multi-currency conversion', () => {
       category: 'Transportation',
       date: '2026-05-01',
       note: 'Bus fare',
+      type: 'expense',
     })
 
     const list = await authed(request(app).get('/api/expenses'), token)
@@ -103,6 +107,7 @@ describe('PATCH /api/auth/me', () => {
       category: 'Dining',
       date: '2026-05-01',
       note: 'Lunch',
+      type: 'expense',
     })
 
     const patch = await authed(request(app).patch('/api/auth/me'), token).send({

@@ -63,7 +63,7 @@ beforeEach(() => {
           mask: '0000',
           type: 'depository',
           subtype: 'checking',
-          balances: { iso_currency_code: 'USD' },
+          balances: { iso_currency_code: 'USD', current: 1500.25 },
         },
       ],
     },
@@ -102,13 +102,13 @@ describe('POST /api/plaid/link-token', () => {
 })
 
 describe('POST /api/plaid/exchange', () => {
-  it('stores accounts and imports only spending transactions', async () => {
+  it('stores accounts (with balance) and imports both spending and income transactions', async () => {
     const token = await signupAndGetToken('jane@example.com')
 
     const response = await link(token)
 
     expect(response.status).toBe(201)
-    expect(response.body).toMatchObject({ accounts: 1, imported: 1 })
+    expect(response.body).toMatchObject({ accounts: 1, imported: 2 })
 
     const accounts = await authed(request(app).get('/api/accounts'), token)
     expect(accounts.body.accounts).toHaveLength(1)
@@ -117,17 +117,32 @@ describe('POST /api/plaid/exchange', () => {
       mask: '0000',
       subtype: 'checking',
       currency: 'USD',
+      balance: 1500.25,
+      convertedBalance: 1500.25,
+      baseCurrency: 'USD',
     })
 
     const expenses = await authed(request(app).get('/api/expenses'), token)
-    expect(expenses.body.expenses).toHaveLength(1)
-    expect(expenses.body.expenses[0]).toMatchObject({
-      amount: 12.5,
-      category: 'Dining',
-      merchant: 'Starbucks',
-      source: 'plaid',
-      pending: false,
-    })
+    expect(expenses.body.expenses).toHaveLength(2)
+    expect(expenses.body.expenses).toContainEqual(
+      expect.objectContaining({
+        amount: 12.5,
+        type: 'expense',
+        category: 'Dining',
+        merchant: 'Starbucks',
+        source: 'plaid',
+        pending: false,
+      })
+    )
+    expect(expenses.body.expenses).toContainEqual(
+      expect.objectContaining({
+        amount: 2000,
+        type: 'income',
+        category: 'Income',
+        note: 'Payroll',
+        source: 'plaid',
+      })
+    )
   })
 
   it('rejects a missing public_token', async () => {
@@ -155,7 +170,7 @@ describe('POST /api/plaid/sync', () => {
     await authed(request(app).post('/api/plaid/sync'), token)
 
     const expenses = await authed(request(app).get('/api/expenses'), token)
-    expect(expenses.body.expenses).toHaveLength(1)
+    expect(expenses.body.expenses).toHaveLength(2)
   })
 
   it('removes expenses that Plaid reports as removed', async () => {
@@ -175,7 +190,8 @@ describe('POST /api/plaid/sync', () => {
     await authed(request(app).post('/api/plaid/sync'), token)
 
     const expenses = await authed(request(app).get('/api/expenses'), token)
-    expect(expenses.body.expenses).toHaveLength(0)
+    expect(expenses.body.expenses).toHaveLength(1)
+    expect(expenses.body.expenses[0]).toMatchObject({ category: 'Income', type: 'income' })
   })
 })
 

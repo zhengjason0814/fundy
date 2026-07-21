@@ -12,7 +12,13 @@ function authed(req, token) {
   return req.set('Authorization', `Bearer ${token}`)
 }
 
-const groceries = { amount: 42.5, category: 'Groceries', date: '2026-07-10', note: 'Weekly shop' }
+const groceries = {
+  amount: 42.5,
+  category: 'Groceries',
+  date: '2026-07-10',
+  note: 'Weekly shop',
+  type: 'expense',
+}
 
 describe('POST /api/expenses', () => {
   it('creates an expense for the logged-in user', async () => {
@@ -38,6 +44,45 @@ describe('POST /api/expenses', () => {
     expect(response.status).toBe(400)
   })
 
+  it('rejects a missing type', async () => {
+    const token = await signupAndGetToken('jane@example.com')
+
+    const response = await authed(request(app).post('/api/expenses'), token).send({
+      amount: 10,
+      category: 'Groceries',
+      date: '2026-07-10',
+      note: 'Snacks',
+    })
+
+    expect(response.status).toBe(400)
+  })
+
+  it('rejects an invalid type', async () => {
+    const token = await signupAndGetToken('jane@example.com')
+
+    const response = await authed(request(app).post('/api/expenses'), token).send({
+      ...groceries,
+      type: 'refund',
+    })
+
+    expect(response.status).toBe(400)
+  })
+
+  it('creates an income entry', async () => {
+    const token = await signupAndGetToken('jane@example.com')
+
+    const response = await authed(request(app).post('/api/expenses'), token).send({
+      amount: 2000,
+      category: 'Income',
+      date: '2026-07-10',
+      note: 'Paycheck',
+      type: 'income',
+    })
+
+    expect(response.status).toBe(201)
+    expect(response.body.expense).toMatchObject({ type: 'income', category: 'Income' })
+  })
+
   it('rejects a request without a token', async () => {
     const response = await request(app).post('/api/expenses').send(groceries)
 
@@ -59,12 +104,14 @@ describe('GET /api/expenses', () => {
       category: 'Transportation',
       date: '2026-07-12',
       note: 'Bus fare',
+      type: 'expense',
     })
     await authed(request(app).post('/api/expenses'), bobToken).send({
       amount: 99,
       category: 'Other',
       date: '2026-07-05',
       note: 'Misc',
+      type: 'expense',
     })
 
     const response = await authed(request(app).get('/api/expenses'), janeToken)

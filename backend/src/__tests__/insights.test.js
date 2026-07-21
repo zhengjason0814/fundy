@@ -16,7 +16,14 @@ async function createExpense(token, overrides = {}) {
   const res = await request(app)
     .post('/api/expenses')
     .set('Authorization', `Bearer ${token}`)
-    .send({ amount: 5, category: 'Dining', date: '2026-07-01', note: 'test note', ...overrides })
+    .send({
+      amount: 5,
+      category: 'Dining',
+      date: '2026-07-01',
+      note: 'test note',
+      type: 'expense',
+      ...overrides,
+    })
   return res.body.expense
 }
 
@@ -72,6 +79,32 @@ describe('GET /api/insights/prediction', () => {
     )
   })
 
+  it('excludes income and Credit Card Payment from the ML input', async () => {
+    mlClient.predict.mockResolvedValue({
+      status: 'ok',
+      current_month: { low: 100, mid: 150, high: 200, spent_so_far: 50 },
+      next_month: { low: 90, mid: 140, high: 210 },
+    })
+    const token = await signupAndGetToken()
+    await createExpense(token, { amount: 5, category: 'Dining', date: '2026-07-01' })
+    await createExpense(token, {
+      amount: 2000,
+      category: 'Income',
+      date: '2026-07-02',
+      type: 'income',
+    })
+    await createExpense(token, { amount: 300, category: 'Credit Card Payment', date: '2026-07-03' })
+
+    await request(app)
+      .get('/api/insights/prediction')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(mlClient.predict).toHaveBeenCalledWith(
+      [{ date: '2026-07-01', amount: 5 }],
+      expect.any(String)
+    )
+  })
+
   it('degrades to unavailable when ML service is down', async () => {
     mlClient.predict.mockRejectedValue(new Error('connect ECONNREFUSED'))
     const token = await signupAndGetToken()
@@ -117,6 +150,27 @@ describe('GET /api/insights/anomalies', () => {
       .get('/api/insights/anomalies')
       .set('Authorization', `Bearer ${token}`)
     expect(res.body).toMatchObject({ status: 'unavailable', anomalies: [] })
+  })
+
+  it('excludes income and Credit Card Payment from the ML input', async () => {
+    mlClient.detectAnomalies.mockResolvedValue({ status: 'ok', anomalies: [] })
+    const token = await signupAndGetToken()
+    const kept = await createExpense(token, { amount: 5, category: 'Dining', date: '2026-07-01' })
+    await createExpense(token, {
+      amount: 2000,
+      category: 'Income',
+      date: '2026-07-02',
+      type: 'income',
+    })
+    await createExpense(token, { amount: 300, category: 'Credit Card Payment', date: '2026-07-03' })
+
+    await request(app)
+      .get('/api/insights/anomalies')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(mlClient.detectAnomalies).toHaveBeenCalledWith([
+      { id: String(kept._id), category: 'Dining', amount: 5, date: '2026-07-01' },
+    ])
   })
 })
 
