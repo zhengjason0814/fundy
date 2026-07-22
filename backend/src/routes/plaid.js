@@ -96,9 +96,16 @@ router.post('/link-token', async (req, res) => {
 })
 
 router.post('/exchange', async (req, res) => {
-  const { public_token } = req.body
+  const { public_token, institution_id, institution_name, confirm_duplicate } = req.body
   if (!public_token) {
     return res.status(400).json({ error: 'public_token is required' })
+  }
+
+  if (institution_id && !confirm_duplicate) {
+    const existing = await PlaidItem.findOne({ user: req.userId, institutionId: institution_id })
+    if (existing) {
+      return res.status(409).json({ duplicate: true, institutionName: existing.institutionName })
+    }
   }
 
   const exchange = await plaidClient.itemPublicTokenExchange({ public_token })
@@ -106,6 +113,8 @@ router.post('/exchange', async (req, res) => {
     user: req.userId,
     itemId: exchange.data.item_id,
     accessToken: exchange.data.access_token,
+    institutionId: institution_id,
+    institutionName: institution_name,
   })
 
   const accountsResponse = await plaidClient.accountsGet({
@@ -142,6 +151,24 @@ router.post('/sync', async (req, res) => {
   }
 
   res.json(totals)
+})
+
+router.delete('/items/:id', async (req, res) => {
+  const item = await PlaidItem.findOne({ _id: req.params.id, user: req.userId })
+  if (!item) {
+    return res.status(404).json({ error: 'Item not found' })
+  }
+
+  await plaidClient.itemRemove({ access_token: item.accessToken })
+
+  const accounts = await Account.find({ item: item._id })
+  const accountIds = accounts.map((account) => account._id)
+
+  const expenseResult = await Expense.deleteMany({ account: { $in: accountIds } })
+  await Account.deleteMany({ item: item._id })
+  await item.deleteOne()
+
+  res.json({ accountsRemoved: accountIds.length, expensesRemoved: expenseResult.deletedCount })
 })
 
 module.exports = router

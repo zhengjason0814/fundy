@@ -9,7 +9,10 @@ router.use(requireAuth)
 
 router.get('/', async (req, res) => {
   const user = await User.findById(req.userId).select('baseCurrency')
-  const accounts = await Account.find({ user: req.userId }).sort({ createdAt: 1 }).lean()
+  const accounts = await Account.find({ user: req.userId })
+    .sort({ createdAt: 1 })
+    .populate('item', 'institutionName institutionId')
+    .lean()
   const converted = await convertAccountBalances(accounts, user.baseCurrency)
   res.json({ accounts: converted, baseCurrency: user.baseCurrency })
 })

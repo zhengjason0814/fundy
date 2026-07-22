@@ -1,7 +1,36 @@
 import ConnectBank from './ConnectBank'
 import { formatMoney } from '../currencies'
 
-function AccountsPanel({ accounts, onConnected, onSync, syncing }) {
+function groupByConnection(accounts) {
+  const groups = new Map()
+  for (const account of accounts) {
+    const itemId = account.item?._id ?? 'unknown'
+    if (!groups.has(itemId)) {
+      groups.set(itemId, {
+        itemId,
+        institutionName: account.item?.institutionName || 'Linked bank',
+        accounts: [],
+      })
+    }
+    groups.get(itemId).accounts.push(account)
+  }
+  return Array.from(groups.values())
+}
+
+function AccountsPanel({ accounts, onConnected, onSync, onDisconnect, syncing }) {
+  const groups = groupByConnection(accounts)
+
+  function handleDisconnect(group) {
+    const label = group.accounts.length === 1 ? '1 account' : `${group.accounts.length} accounts`
+    if (
+      window.confirm(
+        `Disconnect ${group.institutionName}? This will remove its ${label} and all imported transactions. This can't be undone.`
+      )
+    ) {
+      onDisconnect(group.itemId)
+    }
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
@@ -21,33 +50,49 @@ function AccountsPanel({ accounts, onConnected, onSync, syncing }) {
         </div>
       </div>
 
-      {accounts.length === 0 ? (
+      {groups.length === 0 ? (
         <div className="px-6 py-8 text-center text-slate-500">
           No linked accounts yet. Connect a bank to import transactions automatically.
         </div>
       ) : (
-        <ul className="divide-y divide-slate-100">
-          {accounts.map((account) => (
-            <li key={account._id} className="px-6 py-3 flex items-center justify-between">
-              <div>
-                <span className="font-medium text-ink">{account.name}</span>
-                {account.mask && (
-                  <span className="text-slate-400 text-sm"> ••{account.mask}</span>
-                )}
+        <div className="divide-y divide-slate-200">
+          {groups.map((group) => (
+            <div key={group.itemId} className="px-6 py-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-ink">{group.institutionName}</span>
+                <button
+                  type="button"
+                  onClick={() => handleDisconnect(group)}
+                  className="text-xs text-slate-400 hover:text-red-600"
+                >
+                  Disconnect
+                </button>
               </div>
-              <div className="text-right">
-                <div className="text-xs text-slate-500 capitalize">
-                  {account.subtype || account.type}
-                </div>
-                {typeof account.balance === 'number' && (
-                  <div className="text-sm text-ink">
-                    {formatMoney(account.balance, account.currency)}
-                  </div>
-                )}
-              </div>
-            </li>
+              <ul className="divide-y divide-slate-100">
+                {group.accounts.map((account) => (
+                  <li key={account._id} className="py-2 flex items-center justify-between">
+                    <div>
+                      <span className="font-medium text-ink">{account.name}</span>
+                      {account.mask && (
+                        <span className="text-slate-400 text-sm"> ••{account.mask}</span>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-slate-500 capitalize">
+                        {account.subtype || account.type}
+                      </div>
+                      {typeof account.balance === 'number' && (
+                        <div className="text-sm text-ink">
+                          {formatMoney(account.balance, account.currency)}
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   )

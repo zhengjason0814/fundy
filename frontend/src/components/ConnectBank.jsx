@@ -6,14 +6,40 @@ function ConnectBank({ onConnected }) {
   const [linkToken, setLinkToken] = useState(null)
   const [busy, setBusy] = useState(false)
 
+  async function exchange(publicToken, metadata, confirmDuplicate = false) {
+    try {
+      await client.post('/plaid/exchange', {
+        public_token: publicToken,
+        institution_id: metadata.institution?.institution_id,
+        institution_name: metadata.institution?.name,
+        confirm_duplicate: confirmDuplicate,
+      })
+      setLinkToken(null)
+      onConnected()
+    } catch (err) {
+      if (err.response?.status === 409) {
+        const { institutionName } = err.response.data
+        if (
+          window.confirm(
+            `You already have ${institutionName} connected. Connect another login anyway?`
+          )
+        ) {
+          await exchange(publicToken, metadata, true)
+        } else {
+          setLinkToken(null)
+        }
+      } else {
+        throw err
+      }
+    }
+  }
+
   const { open, ready } = usePlaidLink({
     token: linkToken,
-    onSuccess: async (publicToken) => {
+    onSuccess: async (publicToken, metadata) => {
       setBusy(true)
       try {
-        await client.post('/plaid/exchange', { public_token: publicToken })
-        setLinkToken(null)
-        onConnected()
+        await exchange(publicToken, metadata)
       } finally {
         setBusy(false)
       }

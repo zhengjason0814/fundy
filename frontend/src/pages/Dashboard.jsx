@@ -93,6 +93,11 @@ function Dashboard() {
     }
   }
 
+  async function handleAccountDisconnected(itemId) {
+    await client.delete(`/plaid/items/${itemId}`);
+    await loadData();
+  }
+
   async function handleBaseCurrencyChange(event) {
     const next = event.target.value;
     setBaseCurrency(next);
@@ -145,6 +150,7 @@ function Dashboard() {
               accounts={accounts}
               onConnected={loadData}
               onSync={handleSync}
+              onDisconnect={handleAccountDisconnected}
               syncing={syncing}
             />
             <AnomalyStrip
