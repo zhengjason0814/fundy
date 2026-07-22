@@ -183,17 +183,13 @@ describe('GET /api/insights/suggest-category', () => {
     expect(res.status).toBe(400)
   })
 
-  it('builds history from note and merchant and relays the suggestion', async () => {
-    mlClient.classify.mockResolvedValue({ status: 'ok', category: 'Coffee', confidence: 0.83 })
+  it('relays the suggestion for the given text', async () => {
+    mlClient.classify.mockResolvedValue({ status: 'ok', category: 'Groceries', confidence: 0.83 })
     const token = await signupAndGetToken()
-    await createExpense(token, { note: 'latte' })
     const res = await request(app)
-      .get('/api/insights/suggest-category?text=starbucks')
+      .get('/api/insights/suggest-category?text=whole+foods')
       .set('Authorization', `Bearer ${token}`)
-    expect(res.body).toMatchObject({ status: 'ok', category: 'Coffee' })
-    expect(mlClient.classify).toHaveBeenCalledWith(
-      [{ text: 'latte', category: 'Dining' }],
-      'starbucks'
-    )
+    expect(res.body).toMatchObject({ status: 'ok', category: 'Groceries' })
+    expect(mlClient.classify).toHaveBeenCalledWith('whole foods')
   })
 })

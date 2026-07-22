@@ -10,6 +10,9 @@ def steady_month(year, month, days, per_day):
 
 def build_history():
     expenses = []
+    expenses += steady_month(2026, 1, 31, 10.0)
+    expenses += steady_month(2026, 2, 28, 10.0)
+    expenses += steady_month(2026, 3, 31, 10.0)
     expenses += steady_month(2026, 4, 30, 10.0)
     expenses += steady_month(2026, 5, 31, 10.0)
     expenses += steady_month(2026, 6, 30, 10.0)
@@ -19,6 +22,14 @@ def build_history():
 
 def test_insufficient_history():
     expenses = steady_month(2026, 6, 30, 10.0) + steady_month(2026, 7, 16, 10.0)
+    assert predict_spend(expenses, "2026-07-16") == {"status": "insufficient_data"}
+
+
+def test_five_complete_months_is_still_insufficient():
+    expenses = []
+    for month, days in [(2, 28), (3, 31), (4, 30), (5, 31), (6, 30)]:
+        expenses += steady_month(2026, month, days, 10.0)
+    expenses += steady_month(2026, 7, 16, 10.0)
     assert predict_spend(expenses, "2026-07-16") == {"status": "insufficient_data"}
 
 

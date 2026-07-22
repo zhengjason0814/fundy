@@ -20,7 +20,7 @@ def test_predict_insufficient_data():
 def test_predict_ok():
     expenses = [
         {"date": f"2026-{month:02d}-{day:02d}", "amount": 10.0}
-        for month in (4, 5, 6)
+        for month in (1, 2, 3, 4, 5, 6)
         for day in range(1, 29)
     ]
     response = client.post("/predict", json={"as_of": "2026-07-16", "expenses": expenses})
@@ -30,18 +30,13 @@ def test_predict_ok():
     assert "next_month" in body
 
 
-def test_classify_falls_back_to_other_on_thin_history():
-    response = client.post("/classify", json={"history": [], "text": "starbucks"})
-    assert response.json() == {"status": "ok", "category": "Other", "confidence": 0.0}
-
-
-def test_classify_ok():
-    history = [{"text": f"starbucks {i}", "category": "Coffee"} for i in range(6)]
-    history += [{"text": f"whole foods {i}", "category": "Groceries"} for i in range(6)]
-    response = client.post("/classify", json={"history": history, "text": "starbucks downtown"})
-    body = response.json()
-    assert body["status"] == "ok"
-    assert body["category"] == "Coffee"
+def test_classify_relays_suggestion(monkeypatch):
+    monkeypatch.setattr(
+        "app.main.suggest_category",
+        lambda text: {"category": "Groceries", "confidence": 0.87},
+    )
+    response = client.post("/classify", json={"text": "grocery shopping"})
+    assert response.json() == {"status": "ok", "category": "Groceries", "confidence": 0.87}
 
 
 def test_anomalies_endpoint():
