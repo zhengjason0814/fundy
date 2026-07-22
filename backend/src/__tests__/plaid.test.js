@@ -98,6 +98,9 @@ describe('POST /api/plaid/link-token', () => {
 
     expect(response.status).toBe(200)
     expect(response.body.link_token).toBe('link-sandbox-token')
+    expect(plaidClient.linkTokenCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ transactions: { days_requested: 365 } })
+    )
   })
 
   it('rejects a request without a token', async () => {

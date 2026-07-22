@@ -25,12 +25,20 @@ def test_insufficient_history():
     assert predict_spend(expenses, "2026-07-16") == {"status": "insufficient_data"}
 
 
-def test_five_complete_months_is_still_insufficient():
+def test_two_complete_months_is_still_insufficient():
     expenses = []
-    for month, days in [(2, 28), (3, 31), (4, 30), (5, 31), (6, 30)]:
+    for month, days in [(5, 31), (6, 30)]:
         expenses += steady_month(2026, month, days, 10.0)
     expenses += steady_month(2026, 7, 16, 10.0)
     assert predict_spend(expenses, "2026-07-16") == {"status": "insufficient_data"}
+
+
+def test_three_complete_months_unlocks_predictions():
+    expenses = []
+    for month, days in [(4, 30), (5, 31), (6, 30)]:
+        expenses += steady_month(2026, month, days, 10.0)
+    expenses += steady_month(2026, 7, 16, 10.0)
+    assert predict_spend(expenses, "2026-07-16")["status"] == "ok"
 
 
 def test_projects_steady_spending():
