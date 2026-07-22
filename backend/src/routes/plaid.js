@@ -89,6 +89,7 @@ router.post('/link-token', async (req, res) => {
     user: { client_user_id: String(req.userId) },
     client_name: 'Fundy',
     products: ['transactions'],
+    transactions: { days_requested: 365 },
     country_codes: ['US'],
     language: 'en',
   })

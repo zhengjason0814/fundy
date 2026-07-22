@@ -16,7 +16,7 @@ function PredictionCard({ prediction, baseCurrency }) {
   if (prediction.status === 'insufficient_data') {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-sm text-slate-500">
-        Keep adding expenses — predictions unlock after 6 full months of history.
+        Keep adding expenses — predictions unlock after 3 full months of history.
       </div>
     )
   }
@@ -43,6 +43,9 @@ function PredictionCard({ prediction, baseCurrency }) {
           <p className="text-xs text-slate-400 mt-1">Based on your monthly history</p>
         </div>
       </div>
+      <p className="text-xs text-slate-400 mt-4">
+        Predictions get more accurate as more of your expense history builds up.
+      </p>
     </div>
   )
 }

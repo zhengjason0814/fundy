@@ -4,7 +4,7 @@ from datetime import date
 import numpy as np
 from sklearn.ensemble import GradientBoostingRegressor
 
-MIN_COMPLETE_MONTHS = 6
+MIN_COMPLETE_MONTHS = 3
 QUANTILE_ALPHAS = [0.1, 0.5, 0.9]
 
 
