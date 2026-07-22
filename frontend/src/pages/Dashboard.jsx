@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import client from "../api/client";
 import { clearToken } from "../auth";
@@ -19,6 +19,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [syncing, setSyncing] = useState(false);
+  const autoSyncStarted = useRef(false);
   const navigate = useNavigate();
 
   const loadData = useCallback(async () => {
@@ -51,9 +52,22 @@ function Dashboard() {
     }
   }, [navigate]);
 
+  const syncThenReload = useCallback(async () => {
+    setSyncing(true);
+    try {
+      await client.post("/plaid/sync");
+      await loadData();
+    } finally {
+      setSyncing(false);
+    }
+  }, [loadData]);
+
   useEffect(() => {
     loadData().finally(() => setLoading(false));
-  }, [loadData]);
+    if (autoSyncStarted.current) return;
+    autoSyncStarted.current = true;
+    syncThenReload().catch(() => {});
+  }, [loadData, syncThenReload]);
 
   async function handleExpenseAdded(expense) {
     setExpenses((current) =>
@@ -84,12 +98,10 @@ function Dashboard() {
   }
 
   async function handleSync() {
-    setSyncing(true);
     try {
-      await client.post("/plaid/sync");
-      await loadData();
-    } finally {
-      setSyncing(false);
+      await syncThenReload();
+    } catch {
+      setError("Could not sync your accounts");
     }
   }
 

@@ -40,12 +40,14 @@ router.get('/prediction', async (req, res) => {
 
 router.get('/anomalies', async (req, res) => {
   const { usable, baseCurrency } = await loadConvertibleExpenses(req.userId)
-  const items = usable.map((expense) => ({
-    id: String(expense._id),
-    category: expense.category,
-    amount: expense.convertedAmount,
-    date: isoDay(expense.date),
-  }))
+  const items = usable
+    .filter((expense) => expense.category !== 'Other')
+    .map((expense) => ({
+      id: String(expense._id),
+      category: expense.category,
+      amount: expense.convertedAmount,
+      date: isoDay(expense.date),
+    }))
 
   try {
     const result = await mlClient.detectAnomalies(items)

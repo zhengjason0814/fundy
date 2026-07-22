@@ -172,6 +172,21 @@ describe('GET /api/insights/anomalies', () => {
       { id: String(kept._id), category: 'Dining', amount: 5, date: '2026-07-01' },
     ])
   })
+
+  it('excludes Other-category expenses from the ML input', async () => {
+    mlClient.detectAnomalies.mockResolvedValue({ status: 'ok', anomalies: [] })
+    const token = await signupAndGetToken()
+    const kept = await createExpense(token, { amount: 5, category: 'Dining', date: '2026-07-01' })
+    await createExpense(token, { amount: 999, category: 'Other', date: '2026-07-02' })
+
+    await request(app)
+      .get('/api/insights/anomalies')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(mlClient.detectAnomalies).toHaveBeenCalledWith([
+      { id: String(kept._id), category: 'Dining', amount: 5, date: '2026-07-01' },
+    ])
+  })
 })
 
 describe('GET /api/insights/suggest-category', () => {
