@@ -11,13 +11,7 @@ class PredictRequest(BaseModel):
     expenses: list[ExpensePoint]
 
 
-class HistoryRow(BaseModel):
-    text: str
-    category: str
-
-
 class ClassifyRequest(BaseModel):
-    history: list[HistoryRow]
     text: str
 
 

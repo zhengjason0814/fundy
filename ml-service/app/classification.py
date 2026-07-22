@@ -1,25 +1,43 @@
+from pathlib import Path
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline, make_union
 
-MIN_HISTORY = 10
-MIN_CONFIDENCE = 0.5
+MIN_CONFIDENCE = 0.3
+MODEL_PATH = Path(__file__).parent / "models" / "category_classifier.joblib"
 
 
-def suggest_category(history, text):
-    if len(history) < MIN_HISTORY:
-        return {"category": "Other", "confidence": 0.0}
-    if len({row["category"] for row in history}) < 2:
-        return {"category": "Other", "confidence": 0.0}
-
-    texts = [row["text"] for row in history]
-    labels = [row["category"] for row in history]
+def build_pipeline():
     vectorizer = make_union(
         TfidfVectorizer(analyzer="word", ngram_range=(1, 2)),
         TfidfVectorizer(analyzer="char_wb", ngram_range=(3, 4)),
     )
-    model = make_pipeline(vectorizer, LogisticRegression(max_iter=1000))
+    return make_pipeline(
+        vectorizer, LogisticRegression(max_iter=1000, class_weight="balanced")
+    )
+
+
+def train(texts, labels):
+    model = build_pipeline()
     model.fit(texts, labels)
+    return model
+
+
+def _load_model():
+    if not MODEL_PATH.exists():
+        return None
+    import joblib
+
+    return joblib.load(MODEL_PATH)
+
+
+_model = _load_model()
+
+
+def suggest_category(text, model=_model):
+    if model is None:
+        return {"category": "Other", "confidence": 0.0}
 
     probabilities = model.predict_proba([text])[0]
     best = int(probabilities.argmax())

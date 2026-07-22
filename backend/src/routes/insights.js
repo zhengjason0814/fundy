@@ -67,16 +67,8 @@ router.get('/suggest-category', async (req, res) => {
     return res.status(400).json({ error: 'text is required' })
   }
 
-  const expenses = await Expense.find({ user: req.userId }).lean()
-  const history = expenses
-    .map((expense) => ({
-      text: [expense.merchant, expense.note].filter(Boolean).join(' '),
-      category: expense.category,
-    }))
-    .filter((row) => row.text)
-
   try {
-    const result = await mlClient.classify(history, text)
+    const result = await mlClient.classify(text)
     res.json(result)
   } catch {
     res.json({ status: 'unavailable' })

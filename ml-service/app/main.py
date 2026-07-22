@@ -21,8 +21,7 @@ def predict(request: PredictRequest):
 
 @app.post("/classify")
 def classify(request: ClassifyRequest):
-    history = [row.model_dump() for row in request.history]
-    suggestion = suggest_category(history, request.text)
+    suggestion = suggest_category(request.text)
     return {"status": "ok", **suggestion}
 
 

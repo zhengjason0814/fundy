@@ -10,8 +10,8 @@ async function predict(expenses, asOf) {
   return data
 }
 
-async function classify(history, text) {
-  const { data } = await client.post('/classify', { history, text })
+async function classify(text) {
+  const { data } = await client.post('/classify', { text })
   return data
 }
 
