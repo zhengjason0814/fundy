@@ -68,9 +68,10 @@ function BudgetRow({ status, baseCurrency, onSet, onRemove }) {
             <button
               type="button"
               onClick={() => { escapeCancelled.current = false; setDraft(String(status.limit)); setEditing(true); }}
+              aria-label={`Edit ${status.category} budget limit`}
               className="underline decoration-dotted hover:text-ink"
             >
-              {formatMoney(status.limit, baseCurrency)}
+              {formatMoney(status.limit, baseCurrency)} <span aria-hidden="true">✎</span>
             </button>
           )}
         </span>
