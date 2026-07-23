@@ -17,6 +17,18 @@ export const CATEGORIES = [
   'Other',
 ]
 
+const NON_BUDGETABLE_CATEGORIES = new Set([
+  'Income',
+  'Deposit',
+  'Withdrawal',
+  'Transfer',
+  'Credit Card Payment',
+])
+
+export const BUDGETABLE_CATEGORIES = CATEGORIES.filter(
+  (category) => !NON_BUDGETABLE_CATEGORIES.has(category)
+)
+
 const NONE_LIKE_NOTES = new Set([
   'none',
   'n/a',

@@ -21,7 +21,7 @@ export function monthLabel(monthKey) {
   })
 }
 
-export function categoryBreakdown(expenses, monthKey) {
+export function categoryTotals(expenses, monthKey) {
   const totals = new Map()
   for (const expense of expenses) {
     if (!isSpend(expense)) continue
@@ -29,6 +29,11 @@ export function categoryBreakdown(expenses, monthKey) {
     if (String(expense.date).slice(0, 7) !== monthKey) continue
     totals.set(expense.category, (totals.get(expense.category) || 0) + expense.convertedAmount)
   }
+  return totals
+}
+
+export function categoryBreakdown(expenses, monthKey) {
+  const totals = categoryTotals(expenses, monthKey)
 
   const ranked = [...totals.entries()]
     .map(([name, amount]) => ({ name, amount, categories: [name] }))
