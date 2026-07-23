@@ -11,6 +11,8 @@ import AnomalyStrip from "../components/AnomalyStrip";
 import BalanceCard from "../components/BalanceCard";
 import CategoryBreakdownCard from "../components/CategoryBreakdownCard";
 import SpendingTrendCard from "../components/SpendingTrendCard";
+import BudgetsCard from "../components/BudgetsCard";
+import BudgetAlertStrip from "../components/BudgetAlertStrip";
 
 function Dashboard() {
   const [expenses, setExpenses] = useState([]);
@@ -18,6 +20,7 @@ function Dashboard() {
   const [prediction, setPrediction] = useState(null);
   const [anomalies, setAnomalies] = useState([]);
   const [baseCurrency, setBaseCurrency] = useState("USD");
+  const [budgets, setBudgets] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [syncing, setSyncing] = useState(false);
@@ -40,6 +43,7 @@ function Dashboard() {
         client.get("/insights/anomalies").catch(() => null),
       ]);
       setBaseCurrency(meResponse.data.user.baseCurrency);
+      setBudgets(meResponse.data.user.budgets ?? {});
       setExpenses(expensesResponse.data.expenses);
       setAccounts(accountsResponse.data.accounts);
       setPrediction(predictionResponse?.data ?? { status: "unavailable" });
@@ -97,6 +101,16 @@ function Dashboard() {
   async function handleDismissAnomaly(id) {
     await client.post(`/expenses/${id}/dismiss-anomaly`);
     setAnomalies((current) => current.filter((anomaly) => anomaly.id !== id));
+  }
+
+  async function handleBudgetSet(category, amount) {
+    const response = await client.put("/budgets", { category, amount });
+    setBudgets(response.data.budgets);
+  }
+
+  async function handleBudgetRemoved(category) {
+    const response = await client.delete(`/budgets/${encodeURIComponent(category)}`);
+    setBudgets(response.data.budgets);
   }
 
   async function handleSync() {
@@ -172,9 +186,17 @@ function Dashboard() {
               baseCurrency={baseCurrency}
               onDismiss={handleDismissAnomaly}
             />
+            <BudgetAlertStrip expenses={expenses} budgets={budgets} baseCurrency={baseCurrency} />
             <PredictionCard prediction={prediction} baseCurrency={baseCurrency} />
             <CategoryBreakdownCard expenses={expenses} baseCurrency={baseCurrency} />
             <SpendingTrendCard expenses={expenses} baseCurrency={baseCurrency} />
+            <BudgetsCard
+              expenses={expenses}
+              baseCurrency={baseCurrency}
+              budgets={budgets}
+              onSet={handleBudgetSet}
+              onRemove={handleBudgetRemoved}
+            />
             <AddExpenseForm onAdded={handleExpenseAdded} baseCurrency={baseCurrency} />
             <ExpenseList
               expenses={expenses}
