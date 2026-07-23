@@ -43,7 +43,7 @@ router.post('/login', async (req, res) => {
 })
 
 router.get('/me', requireAuth, async (req, res) => {
-  const user = await User.findById(req.userId).select('email baseCurrency createdAt')
+  const user = await User.findById(req.userId).select('email baseCurrency budgets createdAt')
   res.json({ user })
 })
 
@@ -57,7 +57,7 @@ router.patch('/me', requireAuth, async (req, res) => {
     req.userId,
     { baseCurrency },
     { returnDocument: 'after' }
-  ).select('email baseCurrency createdAt')
+  ).select('email baseCurrency budgets createdAt')
 
   res.json({ user })
 })

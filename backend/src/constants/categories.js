@@ -17,4 +17,10 @@ const CATEGORIES = [
   'Other',
 ]
 
-module.exports = { CATEGORIES }
+const NON_BUDGETABLE_CATEGORIES = ['Income', 'Deposit', 'Withdrawal', 'Transfer', 'Credit Card Payment']
+
+const BUDGETABLE_CATEGORIES = CATEGORIES.filter(
+  (category) => !NON_BUDGETABLE_CATEGORIES.includes(category)
+)
+
+module.exports = { CATEGORIES, BUDGETABLE_CATEGORIES }
