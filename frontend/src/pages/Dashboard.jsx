@@ -10,6 +10,7 @@ import PredictionCard from "../components/PredictionCard";
 import AnomalyStrip from "../components/AnomalyStrip";
 import BalanceCard from "../components/BalanceCard";
 import CategoryBreakdownCard from "../components/CategoryBreakdownCard";
+import SpendingTrendCard from "../components/SpendingTrendCard";
 
 function Dashboard() {
   const [expenses, setExpenses] = useState([]);
@@ -173,6 +174,7 @@ function Dashboard() {
             />
             <PredictionCard prediction={prediction} baseCurrency={baseCurrency} />
             <CategoryBreakdownCard expenses={expenses} baseCurrency={baseCurrency} />
+            <SpendingTrendCard expenses={expenses} baseCurrency={baseCurrency} />
             <AddExpenseForm onAdded={handleExpenseAdded} baseCurrency={baseCurrency} />
             <ExpenseList
               expenses={expenses}
