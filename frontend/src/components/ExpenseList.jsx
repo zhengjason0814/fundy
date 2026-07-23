@@ -21,7 +21,7 @@ function isFutureDate(isoString) {
   return isoString.slice(0, 10) > localTodayISO()
 }
 
-function ExpenseList({ expenses, baseCurrency, onDelete, anomalyIds }) {
+function ExpenseList({ expenses, baseCurrency, onDelete, anomalyIds, recurringIds }) {
   if (expenses.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 text-center text-slate-500">
@@ -97,6 +97,14 @@ function ExpenseList({ expenses, baseCurrency, onDelete, anomalyIds }) {
                       className="ml-2 inline-block rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs font-medium"
                     >
                       Unusual
+                    </span>
+                  )}
+                  {recurringIds?.has(expense._id) && (
+                    <span
+                      title="Part of a detected recurring series"
+                      className="ml-2 inline-block rounded-full bg-slate-100 text-slate-600 px-2 py-0.5 text-xs font-medium"
+                    >
+                      ↻ Recurring
                     </span>
                   )}
                 </td>

@@ -20,4 +20,9 @@ async function detectAnomalies(expenses) {
   return data
 }
 
-module.exports = { predict, classify, detectAnomalies }
+async function detectRecurring(expenses) {
+  const { data } = await client.post('/recurring', { expenses })
+  return data
+}
+
+module.exports = { predict, classify, detectAnomalies, detectRecurring }

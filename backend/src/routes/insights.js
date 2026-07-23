@@ -77,4 +77,21 @@ router.get('/suggest-category', async (req, res) => {
   }
 })
 
+router.get('/recurring', async (req, res) => {
+  const { usable, baseCurrency } = await loadConvertibleExpenses(req.userId)
+  const items = usable.map((expense) => ({
+    id: String(expense._id),
+    text: expense.merchant || expense.note,
+    amount: expense.convertedAmount,
+    date: isoDay(expense.date),
+  }))
+
+  try {
+    const result = await mlClient.detectRecurring(items)
+    res.json({ ...result, baseCurrency })
+  } catch {
+    res.json({ status: 'unavailable', baseCurrency })
+  }
+})
+
 module.exports = router

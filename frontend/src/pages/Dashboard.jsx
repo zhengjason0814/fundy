@@ -13,6 +13,7 @@ import CategoryBreakdownCard from "../components/CategoryBreakdownCard";
 import SpendingTrendCard from "../components/SpendingTrendCard";
 import BudgetsCard from "../components/BudgetsCard";
 import BudgetAlertStrip from "../components/BudgetAlertStrip";
+import RecurringCard from "../components/RecurringCard";
 
 function Dashboard() {
   const [expenses, setExpenses] = useState([]);
@@ -21,6 +22,7 @@ function Dashboard() {
   const [anomalies, setAnomalies] = useState([]);
   const [baseCurrency, setBaseCurrency] = useState("USD");
   const [budgets, setBudgets] = useState({});
+  const [recurring, setRecurring] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [syncing, setSyncing] = useState(false);
@@ -35,12 +37,14 @@ function Dashboard() {
         accountsResponse,
         predictionResponse,
         anomaliesResponse,
+        recurringResponse,
       ] = await Promise.all([
         client.get("/auth/me"),
         client.get("/expenses"),
         client.get("/accounts"),
         client.get("/insights/prediction").catch(() => null),
         client.get("/insights/anomalies").catch(() => null),
+        client.get("/insights/recurring").catch(() => null),
       ]);
       setBaseCurrency(meResponse.data.user.baseCurrency);
       setBudgets(meResponse.data.user.budgets ?? {});
@@ -48,6 +52,7 @@ function Dashboard() {
       setAccounts(accountsResponse.data.accounts);
       setPrediction(predictionResponse?.data ?? { status: "unavailable" });
       setAnomalies(anomaliesResponse?.data?.anomalies ?? []);
+      setRecurring(recurringResponse?.data ?? { status: "unavailable" });
     } catch (err) {
       if (err.response?.status === 401) {
         clearToken();
@@ -197,12 +202,18 @@ function Dashboard() {
               onSet={handleBudgetSet}
               onRemove={handleBudgetRemoved}
             />
+            <RecurringCard recurring={recurring} baseCurrency={baseCurrency} />
             <AddExpenseForm onAdded={handleExpenseAdded} baseCurrency={baseCurrency} />
             <ExpenseList
               expenses={expenses}
               baseCurrency={baseCurrency}
               onDelete={handleExpenseDeleted}
               anomalyIds={new Set(anomalies.map((anomaly) => anomaly.id))}
+              recurringIds={
+                new Set(
+                  (recurring?.series ?? []).flatMap((entry) => entry.expense_ids ?? [])
+                )
+              }
             />
           </>
         )}
