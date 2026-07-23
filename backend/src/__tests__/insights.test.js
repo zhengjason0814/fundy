@@ -208,3 +208,55 @@ describe('GET /api/insights/suggest-category', () => {
     expect(mlClient.classify).toHaveBeenCalledWith('whole foods')
   })
 })
+
+describe('GET /api/insights/recurring', () => {
+  it('relays series and adds baseCurrency', async () => {
+    mlClient.detectRecurring.mockResolvedValue({
+      status: 'ok',
+      series: [{ name: 'Netflix', cadence: 'monthly', typical_amount: 15.49 }],
+    })
+    const token = await signupAndGetToken()
+    const res = await request(app)
+      .get('/api/insights/recurring')
+      .set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ status: 'ok', baseCurrency: 'USD' })
+    expect(res.body.series).toHaveLength(1)
+  })
+
+  it('sends merchant-preferred text and excludes non-spend rows', async () => {
+    mlClient.detectRecurring.mockResolvedValue({ status: 'insufficient_data' })
+    const token = await signupAndGetToken()
+    const kept = await createExpense(token, { note: 'monthly sub', amount: 10, date: '2026-07-01' })
+    await createExpense(token, {
+      amount: 2000,
+      category: 'Income',
+      date: '2026-07-02',
+      type: 'income',
+    })
+    await createExpense(token, { amount: 300, category: 'Credit Card Payment', date: '2026-07-03' })
+
+    await request(app)
+      .get('/api/insights/recurring')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(mlClient.detectRecurring).toHaveBeenCalledWith([
+      { id: String(kept._id), text: 'monthly sub', amount: 10, date: '2026-07-01' },
+    ])
+  })
+
+  it('degrades to unavailable when ML service is down', async () => {
+    mlClient.detectRecurring.mockRejectedValue(new Error('down'))
+    const token = await signupAndGetToken()
+    const res = await request(app)
+      .get('/api/insights/recurring')
+      .set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(200)
+    expect(res.body).toMatchObject({ status: 'unavailable', baseCurrency: 'USD' })
+  })
+
+  it('401s without a token', async () => {
+    const res = await request(app).get('/api/insights/recurring')
+    expect(res.status).toBe(401)
+  })
+})

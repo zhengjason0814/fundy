@@ -49,3 +49,21 @@ def test_anomalies_endpoint():
     body = response.json()
     assert body["status"] == "ok"
     assert [a["id"] for a in body["anomalies"]] == ["big"]
+
+
+def test_recurring_endpoint_round_trip():
+    expenses = [
+        {"id": f"n{month}", "text": "Netflix", "amount": 15.49, "date": f"2026-{month:02d}-09"}
+        for month in (1, 2, 3)
+    ]
+    response = client.post("/recurring", json={"expenses": expenses})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["series"][0]["cadence"] == "monthly"
+
+
+def test_recurring_endpoint_insufficient():
+    response = client.post("/recurring", json={"expenses": []})
+    assert response.status_code == 200
+    assert response.json() == {"status": "insufficient_data"}
