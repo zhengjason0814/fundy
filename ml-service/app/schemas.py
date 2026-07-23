@@ -24,3 +24,14 @@ class AnomalyExpense(BaseModel):
 
 class AnomaliesRequest(BaseModel):
     expenses: list[AnomalyExpense]
+
+
+class RecurringExpense(BaseModel):
+    id: str
+    text: str
+    amount: float
+    date: str
+
+
+class RecurringRequest(BaseModel):
+    expenses: list[RecurringExpense]
